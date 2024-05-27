@@ -7,6 +7,7 @@ const path = require("path");
 const { UploadedVideo, User,NewVideo } = require("./schemas/schemas");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
+const fs = require("fs")
 const app = express();
 const port = 3001;
 const axios = require("axios");
@@ -55,21 +56,56 @@ app.post("/uploadVideo", upload.single("video"), async (req, res) => {
 
           try {
             const response = await axios.post(url, data);
-            console.log(response.data.synopsis_output_path);
-            if(isLogined)
-            {const newVideo = new UploadedVideo({
-              name: 'Hasan',
-              time: duration,
-              size: sizeInBytes,
-              videoUrl: `/uploads/${response.data.synopsis_output_path}`,
-            });
+            console.log(response.data);
+            
+            ffmpeg()
+              .input(response.data.synopsis_output_path) // Dönüştürülecek dosyanın yolu
+              .output('output.mp4') // Çıkış dosyasının adı
+              .on('end', async () => {
+                const timestamp = new Date().getTime();
+                const mp4FileName = `output_${timestamp}.mp4`; // Yeni dosya adı oluşturuluyor
+                console.log('Dönüşüm tamamlandı');
+                const mp4FilePath = path.join(__dirname, "uploads", mp4FileName); // Yeni dosyanın yolu belirleniyor
+                const date = new Date(timestamp);
 
-            await newVideo.save();}
-
-            res.status(200).json({
-              message: "Video successfully uploaded and data sent",
-              videoUrl: `/uploads/${response.data.synopsis_output_path}`
-            });
+// Format the date
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+                // Dosya yeni konumuna taşınıyor
+                fs.rename('output.mp4', mp4FilePath, async (err) => {
+                  if (err) {
+                    console.error('Dosya taşıma hatası:', err);
+                    return res.status(500).json({ error: "Error moving the file" });
+                  }
+                  
+                  // Yeni dosya için UploadedVideo oluşturuluyor
+                  const newVideo = new UploadedVideo({
+                    name: response.data.filename,
+                    time: formattedDate,
+                    size: sizeInBytes,
+                    videoUrl: `/uploads/${mp4FileName}`, // Dosyanın URL'sini oluşturun
+                  });
+                  
+                  // Eğer oturum açılmışsa, yeni video kaydedilir
+                  if (isLogined) {
+                    await newVideo.save();
+                  }
+                  
+                  // İşlem tamamlandığında başarılı bir yanıt gönderilir
+                  res.status(200).json({
+                    message: "Video successfully uploaded and data sent",
+                    videoUrl: `/uploads/${mp4FileName}`, // Dosyanın URL'sini response'da gönderin
+                  });
+                });
+              })
+              .on('error', (err) => {
+                console.error('Dönüşüm hatası:', err);
+                res.status(500).json({ error: "Error during video conversion" });
+              })
+              .run();
           } catch (error) {
             console.error("Error:", error);
             res.status(500).json({ error: "Error sending data to API" });
