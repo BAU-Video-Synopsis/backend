@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const ffmpeg = require("fluent-ffmpeg");
 const path = require("path");
-const { UploadedVideo, User } = require("./schemas/schemas");
+const { UploadedVideo, User ,NewVideo} = require("./schemas/schemas");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const app = express();
@@ -55,14 +55,14 @@ app.post("/uploadVideo", upload.single("video"), async (req, res) => {
           axios
             .post(url, data)
             .then(async (response) => {
-              console.log(response.data);
+              console.log(response.data.synopsis_output_path);
               res.status(200).json({ message: "Video successfully uploaded and data sent" });
               if(isLogined) {
-                 const newVideo = new UploadedVideo({
-            name: compressedFileName,
+            const newVideo = new NewVideo({
+            name: 'Hasan',
             time: duration,
             size: sizeInBytes,
-            videoUrl: `/uploads/${compressedFileName}`,
+            videoUrl: `/uploads/${response.data.synopsis_output_path}`,
           });
 
           await newVideo.save();
