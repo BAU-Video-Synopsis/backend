@@ -47,7 +47,7 @@ app.post("/uploadVideo", upload.single("video"), async (req, res) => {
           }
           const sizeInBytes = metadata.format.size;
           const duration = metadata.format.duration;
-          const url = "http://localhost:5000/data";
+          const url = "http://localhost:5000/video-path";
           const data = {
             filePath: compressedFilePath,
           };
