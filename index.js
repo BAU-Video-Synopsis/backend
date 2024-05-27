@@ -35,7 +35,8 @@ app.post("/uploadVideo", upload.single("video"), async (req, res) => {
     const filePath = path.join(__dirname, "uploads", req.file.filename);
     const compressedFileName = `compressed_${req.file.filename}`;
     const compressedFilePath = path.join(__dirname, "uploads", compressedFileName);
-    
+    const isLogined = req.body.isLogined === 'true';
+    console.log("ıs logined",isLogined);
     ffmpeg(filePath)
       .output(compressedFilePath)
       .videoCodec("libx264")
@@ -55,15 +56,15 @@ app.post("/uploadVideo", upload.single("video"), async (req, res) => {
           try {
             const response = await axios.post(url, data);
             console.log(response.data.synopsis_output_path);
-            
-            const newVideo = new UploadedVideo({
+            if(isLogined)
+            {const newVideo = new UploadedVideo({
               name: 'Hasan',
               time: duration,
               size: sizeInBytes,
               videoUrl: `/uploads/${response.data.synopsis_output_path}`,
             });
 
-            await newVideo.save();
+            await newVideo.save();}
 
             res.status(200).json({
               message: "Video successfully uploaded and data sent",
