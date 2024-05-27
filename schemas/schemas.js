@@ -8,7 +8,7 @@ const uploadedVideoSchema = new Schema({
   size: { type: Number, default: 0 }
 });
 
-const UploadedVideo = mongoose.model('UploadedVideo', uploadedVideoSchema);
+const UploadedVideo = mongoose.model('uploadedvideos', uploadedVideoSchema);
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }
