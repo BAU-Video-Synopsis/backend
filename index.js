@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const app = express();
 const port = 3001;
-
+const axios = require('axios');
 app.use(cors());
 mongoose.connect('mongodb+srv://sarpertatkoy:Dce2208SCtgCNPuL@capstone.aajahuz.mongodb.net/Capstone');
 
@@ -52,16 +52,24 @@ app.post('/uploadVideo', upload.single('video'), async (req, res) => {
             name: 'enyenivideo',
             time: duration,
             size: sizeInBytes,
-            videoUrl: `/uploads/${compressedFileName}` // HTTP yolu kullanıyoruz
+            videoUrl: `/uploads/${compressedFileName}`
           });
 
           await newVideo.save();
+          const url = 'http://localhost:5000/data';
+const data = {
+    name: 'Jane Doe',
+    filePath : compressedFilePath
+};
 
-          res.status(201).json({
-            message: 'Video uploaded and compressed successfully',
-            videoUrl: newVideo.videoUrl,
-            videoSize: { width, height }
-          });
+axios.post(url, data)
+    .then(response => {
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+         
         });
       })
       .on('error', (err) => {
